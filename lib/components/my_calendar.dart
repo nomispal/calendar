@@ -1,4 +1,3 @@
-// MyCalendar.dart
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../state/calendar_controller.dart';
@@ -22,7 +21,7 @@ class _MyCalendarState extends State<MyCalendar> {
       height: MediaQuery.of(context).size.height * 0.65,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.0),
-        color: Colors.white, // Set background color
+        color: Colors.white,
       ),
       child: ValueListenableBuilder<DateTime>(
         valueListenable: widget.controller.focusedDayNotifier,
@@ -43,12 +42,10 @@ class _MyCalendarState extends State<MyCalendar> {
             },
             calendarFormat: CalendarFormat.month,
             availableCalendarFormats: const {CalendarFormat.month: 'Month'},
-            // Fixed format
             startingDayOfWeek: StartingDayOfWeek.monday,
             calendarStyle: const CalendarStyle(
               cellPadding: EdgeInsets.symmetric(vertical: 10.0),
               cellMargin: EdgeInsets.all(5.0),
-              // Add margin to prevent text clipping
               defaultTextStyle: TextStyle(
                   color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
               weekendTextStyle: TextStyle(
@@ -66,7 +63,6 @@ class _MyCalendarState extends State<MyCalendar> {
             headerStyle: const HeaderStyle(
               titleCentered: true,
               formatButtonVisible: false,
-              // Remove format button
               titleTextStyle: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
@@ -74,7 +70,7 @@ class _MyCalendarState extends State<MyCalendar> {
               ),
               leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
               rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
-              leftChevronMargin: EdgeInsets.only(right: 8.0), // Adjust spacing
+              leftChevronMargin: EdgeInsets.only(right: 8.0),
             ),
             calendarBuilders: CalendarBuilders(
               dowBuilder: (context, day) {

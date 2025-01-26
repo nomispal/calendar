@@ -4,6 +4,7 @@ import '../state/calendar_controller.dart';
 import './event_dialog.dart';
 import '../models/event.dart';
 import '../components/address_search_field.dart';
+
 class HomeCalendar extends StatefulWidget {
   final CalendarController controller;
 
@@ -75,7 +76,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                         future: Event.getEventsForDate(focusedDay),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
+                            return const Center(child: CircularProgressIndicator());
                           }
                           if (snapshot.hasError) {
                             return Center(child: Text('Error: ${snapshot.error}'));
@@ -99,7 +100,19 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Address: $address', style: const TextStyle(fontSize: 12.0)),
+                                      if (dayEvents.isEmpty)
+                                        Text(
+                                          'No Events\n$address',
+                                          style: const TextStyle(fontSize: 12.0),
+                                        ),
+                                      for (final event in dayEvents)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                          child: Text(
+                                            '${event.title}\n${event.address ?? address}',
+                                            style: const TextStyle(fontSize: 12.0),
+                                          ),
+                                        ),
                                       ElevatedButton(
                                         onPressed: () async {
                                           final selectedAddress = await showDialog<String>(
@@ -121,29 +134,6 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                         child: const Text('Add Location', style: TextStyle(fontSize: 13)),
                                       ),
                                       const SizedBox(height: 8.0),
-                                      ...dayEvents.map((event) => Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Flexible(
-                                              child: Text(
-                                                '${event.title}\n(${TimeOfDay.fromDateTime(event.date).format(context)})',
-                                                softWrap: true,
-                                                style: const TextStyle(fontSize: 12.0),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete, color: Colors.red),
-                                              onPressed: () {
-                                                setState(() {
-                                                  Event.removeEvent(event);
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      )),
                                       GestureDetector(
                                         onTap: () {
                                           showDialog(
@@ -151,6 +141,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                             builder: (context) => EventDialog(
                                               date: day,
                                               onSave: () => setState(() {}),
+                                              selectedAddresses: _selectedAddresses,
                                             ),
                                           );
                                         },

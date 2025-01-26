@@ -4,14 +4,16 @@ class Event {
   final String title;
   final DateTime date;
   final String id; // Unique identifier for Firestore
+  final String? address; // Optional address field
 
-  Event({required this.title, required this.date, required this.id});
+  Event({required this.title, required this.date, required this.id, this.address});
 
   // Convert Event to Firestore Map
   Map<String, dynamic> toMap() {
     return {
       'title': title,
       'date': Timestamp.fromDate(date),
+      'address': address,
     };
   }
 
@@ -22,6 +24,7 @@ class Event {
       id: doc.id,
       title: data['title'],
       date: (data['date'] as Timestamp).toDate(),
+      address: data['address'],
     );
   }
 

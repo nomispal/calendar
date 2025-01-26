@@ -3,10 +3,15 @@ import '../models/event.dart';
 
 class EventDialog extends StatefulWidget {
   final DateTime date;
+  final Map<DateTime, String> selectedAddresses; // Add this parameter
   final Function() onSave;
 
-  const EventDialog({Key? key, required this.date, required this.onSave})
-      : super(key: key);
+  const EventDialog({
+    Key? key,
+    required this.date,
+    required this.onSave,
+    required this.selectedAddresses, // Initialize it
+  }) : super(key: key);
 
   @override
   _EventDialogState createState() => _EventDialogState();
@@ -16,16 +21,15 @@ class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
   TimeOfDay? _selectedTime;
 
-  // List of predefined suggestions for the Autocomplete widget
   final List<String> _eventSuggestions = [
     'Mortgage',
     'Gas Safety Checks',
     'Insurance',
     'Repairs',
     'Inspection',
-  	'Remortgage',
-    'gas'
-    'safety'
+    'Remortgage',
+    'gas',
+    'safety',
     'certificate',
     'insurance',
     'EPC',
@@ -61,9 +65,8 @@ class _EventDialogState extends State<EventDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Wrapping Autocomplete inside a SizedBox for layout constraints
           SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5, // Adjust width
+            width: MediaQuery.of(context).size.width * 0.5,
             child: Autocomplete<String>(
               optionsBuilder: (TextEditingValue textEditingValue) {
                 if (textEditingValue.text.isEmpty) {
@@ -97,7 +100,7 @@ class _EventDialogState extends State<EventDialog> {
                     elevation: 4.0,
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.5,
-                      constraints: BoxConstraints(maxHeight: 200),
+                      constraints: const BoxConstraints(maxHeight: 200),
                       child: ListView.builder(
                         padding: EdgeInsets.zero,
                         itemCount: options.length,
@@ -156,9 +159,15 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.hour,
                 _selectedTime!.minute,
               );
+
+              // Get the selected address for this date
+              final address = widget.selectedAddresses[widget.date] ?? 'No Address Selected';
+
               Event.addEvent(Event(
                 title: _titleController.text,
-                date: selectedDateTime, id: '',
+                date: selectedDateTime,
+                id: '',
+                address: address,
               ));
               widget.onSave();
               Navigator.pop(context);
