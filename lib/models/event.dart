@@ -12,7 +12,7 @@ class Event {
   Map<String, dynamic> toMap() {
     return {
       'title': title,
-      'date': Timestamp.fromDate(date),
+      'date': Timestamp.fromDate(date), // Store date as Firestore Timestamp
       'address': address,
     };
   }
@@ -21,17 +21,34 @@ class Event {
   factory Event.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Event(
-      id: doc.id,
-      title: data['title'],
-      date: (data['date'] as Timestamp).toDate(),
-      address: data['address'],
+      id: doc.id, // Use the document ID as the event ID
+      title: data['title'] ?? 'No Title', // Default to empty string if null
+      date: (data['date'] as Timestamp).toDate(), // Convert Firestore Timestamp to DateTime
+      address: data['address'], // Optional field
     );
   }
 
-  // Add event to Firestore
+  // Static method to stream events for a specific week range
+  static Stream<List<Event>> getEventsForDateStream(DateTime startOfWeek, DateTime endOfWeek) {
+    return FirebaseFirestore.instance
+        .collection('events') // Firestore collection
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek)) // Compare as timestamp
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek)) // Compare as timestamp
+        .orderBy('date') // Order events by date
+        .snapshots() // Real-time listener
+        .map((snapshot) => snapshot.docs
+        .map((doc) => Event.fromFirestore(doc)) // Convert each document to Event
+        .toList());
+  }
+
+  // Add an event to Firestore
   static Future<void> addEvent(Event event) async {
-    final docRef = FirebaseFirestore.instance.collection('events').doc();
-    await docRef.set(event.toMap());
+    try {
+      // Add a new document with an auto-generated ID
+      await FirebaseFirestore.instance.collection('events').add(event.toMap());
+    } catch (e) {
+      print("Error adding event: $e");
+    }
   }
 
   // Get events for a specific date from Firestore
@@ -50,6 +67,10 @@ class Event {
 
   // Remove event from Firestore
   static Future<void> removeEvent(Event event) async {
-    await FirebaseFirestore.instance.collection('events').doc(event.id).delete();
+    try {
+      await FirebaseFirestore.instance.collection('events').doc(event.id).delete();
+    } catch (e) {
+      print("Error removing event: $e");
+    }
   }
 }
