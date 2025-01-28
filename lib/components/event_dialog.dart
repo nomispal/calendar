@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import 'add_suggestions_dialog.dart';
 
 class EventDialog extends StatefulWidget {
   final DateTime date;
-  final Map<DateTime, String> selectedAddresses; // Add this parameter
+  final Map<DateTime, String> selectedAddresses;
   final Function() onSave;
 
   const EventDialog({
     Key? key,
     required this.date,
     required this.onSave,
-    required this.selectedAddresses, // Initialize it
+    required this.selectedAddresses,
   }) : super(key: key);
 
   @override
@@ -21,7 +22,8 @@ class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
   TimeOfDay? _selectedTime;
 
-  final List<String> _eventSuggestions = [
+  // Initialize the suggestions list
+  List<String> _eventSuggestions = [
     'Mortgage',
     'Gas Safety Checks',
     'Insurance',
@@ -54,6 +56,20 @@ class _EventDialogState extends State<EventDialog> {
     if (pickedTime != null) {
       setState(() {
         _selectedTime = pickedTime;
+      });
+    }
+  }
+
+  // Function to open a dialog for adding new suggestions
+  void _addNewSuggestion() async {
+    final newSuggestion = await showDialog<String>(
+      context: context,
+      builder: (context) => AddSuggestionDialog(),
+    );
+
+    if (newSuggestion != null && newSuggestion.isNotEmpty) {
+      setState(() {
+        _eventSuggestions.add(newSuggestion); // Add the new suggestion to the list
       });
     }
   }
@@ -142,6 +158,12 @@ class _EventDialogState extends State<EventDialog> {
               ),
             ),
           ),
+          const SizedBox(height: 16.0),
+          // Button to add new suggestions
+          ElevatedButton(
+            onPressed: _addNewSuggestion,
+            child: const Text('Add New Suggestion'),
+          ),
         ],
       ),
       actions: [
@@ -160,7 +182,6 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.minute,
               );
 
-              // Get the selected address for this date
               final address = widget.selectedAddresses[widget.date] ?? 'No Address Selected';
 
               Event.addEvent(Event(
