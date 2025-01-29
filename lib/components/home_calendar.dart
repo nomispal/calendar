@@ -36,7 +36,10 @@ class _HomeCalendarState extends State<HomeCalendar> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Colors.white,
         title: ValueListenableBuilder<DateTime>(
           valueListenable: widget.controller.focusedDayNotifier,
           builder: (context, focusedDay, _) {
@@ -103,6 +106,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                               final dayEvents = events.where((event) => _isSameDate(event.date, day)).toList();
                               final address = _selectedAddresses[day] ?? 'No Address Selected';
 
+
                               return Expanded(
                                 child: Container(
                                   margin: const EdgeInsets.all(4.0),
@@ -111,111 +115,114 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                     border: Border.all(color: Colors.grey),
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Location Widget
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
+                                  child: Container(
+                                    color: Colors.white,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Location Widget
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              address,
+                                              style: const TextStyle(fontSize: 12.0),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                if (_selectedAddresses.containsKey(day)) {
+                                                  // Remove location if it already exists
+                                                  setState(() {
+                                                    _selectedAddresses.remove(day);
+                                                  });
+                                                } else {
+                                                  // Add location if it doesn't exist
+                                                  final selectedAddress = await showDialog<String>(
+                                                    context: context,
+                                                    builder: (BuildContext context) {
+                                                      return AddressAutocomplete(
+                                                        onAddressSelected: (address) {
+                                                          Navigator.of(context).pop(address);
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                  if (selectedAddress != null) {
+                                                    setState(() {
+                                                      _selectedAddresses[day] = selectedAddress;
+                                                    });
+                                                  }
+                                                }
+                                              },
+                                              child: Text(
+                                                _selectedAddresses.containsKey(day) ? 'Remove Location' : 'Add Location',
+                                                style: const TextStyle(fontSize: 13),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8.0),
+                                        // Events Widget
+                                        if (dayEvents.isEmpty)
                                           Text(
-                                            address,
+                                            'No Events',
                                             style: const TextStyle(fontSize: 12.0),
                                           ),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              if (_selectedAddresses.containsKey(day)) {
-                                                // Remove location if it already exists
-                                                setState(() {
-                                                  _selectedAddresses.remove(day);
-                                                });
-                                              } else {
-                                                // Add location if it doesn't exist
-                                                final selectedAddress = await showDialog<String>(
-                                                  context: context,
-                                                  builder: (BuildContext context) {
-                                                    return AddressAutocomplete(
-                                                      onAddressSelected: (address) {
-                                                        Navigator.of(context).pop(address);
-                                                      },
-                                                    );
-                                                  },
-                                                );
-                                                if (selectedAddress != null) {
-                                                  setState(() {
-                                                    _selectedAddresses[day] = selectedAddress;
-                                                  });
-                                                }
-                                              }
-                                            },
-                                            child: Text(
-                                              _selectedAddresses.containsKey(day) ? 'Remove Location' : 'Add Location',
-                                              style: const TextStyle(fontSize: 13),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8.0),
-                                      // Events Widget
-                                      if (dayEvents.isEmpty)
-                                        Text(
-                                          'No Events',
-                                          style: const TextStyle(fontSize: 12.0),
-                                        ),
-                                      for (final event in dayEvents)
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      '${event.title}\n${DateFormat.jm().format(event.date)}', // Display time here
-                                                      style: const TextStyle(fontSize: 12.0),
-                                                    ),
-                                                  ],
+                                        for (final event in dayEvents)
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        '${event.title}\n${DateFormat.jm().format(event.date)}', // Display time here
+                                                        style: const TextStyle(fontSize: 12.0),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  await _deleteEvent(event);
-                                                },
-                                                child: const Icon(Icons.delete, color: Colors.red),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      const SizedBox(height: 8.0),
-                                      // Add Event Button
-                                      GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => EventDialog(
-                                              date: day,
-                                              onSave: () {
-                                                setState(() {});  // Trigger refresh after adding event
-                                              },
-                                              selectedAddresses: _selectedAddresses,
+                                                GestureDetector(
+                                                  onTap: () async {
+                                                    await _deleteEvent(event);
+                                                  },
+                                                  child: const Icon(Icons.delete, color: Colors.red),
+                                                ),
+                                              ],
                                             ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8.0),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue,
-                                            borderRadius: BorderRadius.circular(4.0),
                                           ),
-                                          child: const Text(
-                                            'Add Event',
-                                            style: TextStyle(color: Colors.white),
+                                        const SizedBox(height: 8.0),
+                                        // Add Event Button
+                                        GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => EventDialog(
+                                                date: day,
+                                                onSave: () {
+                                                  setState(() {});  // Trigger refresh after adding event
+                                                },
+                                                selectedAddresses: _selectedAddresses,
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8.0),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black87,
+                                              borderRadius: BorderRadius.circular(4.0),
+                                            ),
+                                            child: const Text(
+                                              'Add Event',
+                                              style: TextStyle(color: Colors.white),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

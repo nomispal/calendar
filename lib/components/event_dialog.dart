@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event.dart';
 import 'add_suggestions_dialog.dart';
 
@@ -23,30 +24,53 @@ class _EventDialogState extends State<EventDialog> {
   TimeOfDay? _selectedTime;
 
   // Initialize the suggestions list
-  List<String> _eventSuggestions = [
-    'Mortgage',
-    'Gas Safety Checks',
-    'Insurance',
-    'Repairs',
-    'Inspection',
-    'Remortgage',
-    'gas',
-    'safety',
-    'certificate',
-    'insurance',
-    'EPC',
-    'EICR',
-    'PAT',
-    'emergency',
-    'lighting',
-    'fire alarm',
-    'smoke detectors',
-    'carbon monoxide detector',
-    'oil',
-    'right to rent',
-    'legionella',
-    'AST'
-  ];
+  List<String> _eventSuggestions = [];
+
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSuggestions(); // Load suggestions when the dialog is opened
+  }
+
+  // Load suggestions from Firestore
+  Future<void> _loadSuggestions() async {
+    try {
+      final querySnapshot = await _firestore.collection('suggestions').get();
+      setState(() {
+        _eventSuggestions = querySnapshot.docs.map((doc) => doc['title'] as String).toList();
+      });
+    } catch (e) {
+      print('Error loading suggestions: $e');
+    }
+  }
+
+  // Add a new suggestion to Firestore
+  Future<void> _addNewSuggestion(String suggestion) async {
+    try {
+      await _firestore.collection('suggestions').add({
+        'title': suggestion,
+        'timestamp': FieldValue.serverTimestamp(), // Optional: Add a timestamp
+      });
+      await _loadSuggestions(); // Reload suggestions after adding a new one
+    } catch (e) {
+      print('Error adding suggestion: $e');
+    }
+  }
+
+  // Function to open a dialog for adding new suggestions
+  void _addNewSuggestionDialog() async {
+    final newSuggestion = await showDialog<String>(
+      context: context,
+      builder: (context) => AddSuggestionDialog(),
+    );
+
+    if (newSuggestion != null && newSuggestion.isNotEmpty) {
+      await _addNewSuggestion(newSuggestion); // Add the new suggestion to Firestore
+    }
+  }
 
   void _pickTime() async {
     final pickedTime = await showTimePicker(
@@ -56,20 +80,6 @@ class _EventDialogState extends State<EventDialog> {
     if (pickedTime != null) {
       setState(() {
         _selectedTime = pickedTime;
-      });
-    }
-  }
-
-  // Function to open a dialog for adding new suggestions
-  void _addNewSuggestion() async {
-    final newSuggestion = await showDialog<String>(
-      context: context,
-      builder: (context) => AddSuggestionDialog(),
-    );
-
-    if (newSuggestion != null && newSuggestion.isNotEmpty) {
-      setState(() {
-        _eventSuggestions.add(newSuggestion); // Add the new suggestion to the list
       });
     }
   }
@@ -161,7 +171,7 @@ class _EventDialogState extends State<EventDialog> {
           const SizedBox(height: 16.0),
           // Button to add new suggestions
           ElevatedButton(
-            onPressed: _addNewSuggestion,
+            onPressed: _addNewSuggestionDialog,
             child: const Text('Add New Suggestion'),
           ),
         ],
