@@ -1,5 +1,6 @@
 import 'package:calendar/components/home_calendar.dart';
 import 'package:calendar/components/my_calendar.dart';
+import 'package:calendar/components/upcoming_event_list.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -29,9 +30,9 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Left-side container for the calendar
           Container(
-            width: screenWidth * 0.3, // 30% of the screen width
+            width: screenWidth * 0.25, // 30% of the screen width
             padding: const EdgeInsets.all(8.0),
-            color: Colors.grey[200],
+            color: Colors.grey[300],
             child: MyCalendar(controller: calendarController),
           ),
           // Expandable right-side container

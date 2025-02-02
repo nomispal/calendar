@@ -7,12 +7,15 @@ class EventDialog extends StatefulWidget {
   final DateTime date;
   final Map<DateTime, String> selectedAddresses;
   final Function() onSave;
+  final Event? event; // Optional event parameter for updating
+
 
   const EventDialog({
     Key? key,
     required this.date,
     required this.onSave,
     required this.selectedAddresses,
+    this.event, // Add this line
   }) : super(key: key);
 
   @override
@@ -21,6 +24,7 @@ class EventDialog extends StatefulWidget {
 
 class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController(); // Controller for description
   TimeOfDay? _selectedTime;
 
   // Initialize the suggestions list
@@ -33,6 +37,11 @@ class _EventDialogState extends State<EventDialog> {
   void initState() {
     super.initState();
     _loadSuggestions(); // Load suggestions when the dialog is opened
+    if (widget.event != null) {
+      _titleController.text = widget.event!.title;
+      _descriptionController.text = widget.event!.description ?? '';
+      _selectedTime = TimeOfDay.fromDateTime(widget.event!.startTime);
+    }
   }
 
   // Load suggestions from Firestore
@@ -40,7 +49,8 @@ class _EventDialogState extends State<EventDialog> {
     try {
       final querySnapshot = await _firestore.collection('suggestions').get();
       setState(() {
-        _eventSuggestions = querySnapshot.docs.map((doc) => doc['title'] as String).toList();
+        _eventSuggestions =
+            querySnapshot.docs.map((doc) => doc['title'] as String).toList();
       });
     } catch (e) {
       print('Error loading suggestions: $e');
@@ -52,7 +62,6 @@ class _EventDialogState extends State<EventDialog> {
     try {
       await _firestore.collection('suggestions').add({
         'title': suggestion,
-        'timestamp': FieldValue.serverTimestamp(), // Optional: Add a timestamp
       });
       await _loadSuggestions(); // Reload suggestions after adding a new one
     } catch (e) {
@@ -68,7 +77,8 @@ class _EventDialogState extends State<EventDialog> {
     );
 
     if (newSuggestion != null && newSuggestion.isNotEmpty) {
-      await _addNewSuggestion(newSuggestion); // Add the new suggestion to Firestore
+      await _addNewSuggestion(
+          newSuggestion); // Add the new suggestion to Firestore
     }
   }
 
@@ -147,6 +157,16 @@ class _EventDialogState extends State<EventDialog> {
             ),
           ),
           const SizedBox(height: 16.0),
+          // Description TextField
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              hintText: 'Comments',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3, // Allow multiple lines for description
+          ),
+          const SizedBox(height: 16.0),
           GestureDetector(
             onTap: _pickTime,
             child: Container(
@@ -192,13 +212,16 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.minute,
               );
 
-              final address = widget.selectedAddresses[widget.date] ?? 'No Address Selected';
+              final address = widget.selectedAddresses[widget.date] ??
+                  'No Address Selected';
 
               Event.addEvent(Event(
                 title: _titleController.text,
                 date: selectedDateTime,
-                id: '',
+                id: '', // You might want to generate a unique ID here
                 address: address,
+                startTime: selectedDateTime, // Use selectedDateTime as startTime
+                description: _descriptionController.text, // Add the description
               ));
               widget.onSave();
               Navigator.pop(context);

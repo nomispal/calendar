@@ -1,76 +1,81 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Event {
+  final String id; // Firestore document ID
   final String title;
   final DateTime date;
-  final String id; // Unique identifier for Firestore
-  final String? address; // Optional address field
+  final DateTime startTime;
+  final String? address;
+  final String? description;
 
-  Event({required this.title, required this.date, required this.id, this.address});
+  Event({
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.startTime,
+    this.address,
+    this.description,
+  });
 
-  // Convert Event to Firestore Map
   Map<String, dynamic> toMap() {
     return {
       'title': title,
-      'date': Timestamp.fromDate(date), // Store date as Firestore Timestamp
+      'date': Timestamp.fromDate(date),
+      'startTime': Timestamp.fromDate(startTime),
       'address': address,
+      'description': description,
     };
   }
 
-  // Create an Event from Firestore document
   factory Event.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Event(
-      id: doc.id, // Use the document ID as the event ID
-      title: data['title'] ?? 'No Title', // Default to empty string if null
-      date: (data['date'] as Timestamp).toDate(), // Convert Firestore Timestamp to DateTime
-      address: data['address'], // Optional field
+      id: doc.id,
+      // Critical: Get document ID from snapshot
+      title: data['title'] ?? '',
+      date: (data['date'] as Timestamp).toDate(),
+      startTime: (data['startTime'] as Timestamp).toDate(),
+      address: data['address'],
+      description: data['description'],
     );
   }
 
-  // Static method to stream events for a specific week range
-  static Stream<List<Event>> getEventsForDateStream(DateTime startOfWeek, DateTime endOfWeek) {
+  static Stream<List<Event>> getEventsForDateStream(DateTime start,
+      DateTime end) {
     return FirebaseFirestore.instance
-        .collection('events') // Firestore collection
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek)) // Compare as timestamp
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek)) // Compare as timestamp
-        .orderBy('date') // Order events by date
-        .snapshots() // Real-time listener
-        .map((snapshot) => snapshot.docs
-        .map((doc) => Event.fromFirestore(doc)) // Convert each document to Event
-        .toList());
-  }
-
-  // Add an event to Firestore
-  static Future<void> addEvent(Event event) async {
-    try {
-      // Add a new document with an auto-generated ID
-      await FirebaseFirestore.instance.collection('events').add(event.toMap());
-    } catch (e) {
-      print("Error adding event: $e");
-    }
-  }
-
-  // Get events for a specific date from Firestore
-  static Future<List<Event>> getEventsForDate(DateTime date) async {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(Duration(days: 1));
-
-    final snapshot = await FirebaseFirestore.instance
         .collection('events')
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('date', isLessThan: Timestamp.fromDate(endOfDay))
-        .get();
-
-    return snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList();
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .snapshots()
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList());
   }
 
-  // Remove event from Firestore
+
+  static Future<void> addEvent(Event event) async {
+    await FirebaseFirestore.instance.collection('events').add(event.toMap());
+  }
+
+  static Future<void> updateEvent(Event event) async {
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(event.id) // Use document ID here
+        .update(event.toMap());
+  }
+
   static Future<void> removeEvent(Event event) async {
-    try {
-      await FirebaseFirestore.instance.collection('events').doc(event.id).delete();
-    } catch (e) {
-      print("Error removing event: $e");
-    }
+    await FirebaseFirestore.instance.collection('events')
+        .doc(event.id)
+        .delete();
+  }
+
+  // Get all events stream
+  static Stream<List<Event>> getAllEventsStream() {
+    return FirebaseFirestore.instance
+        .collection('events') // Firestore collection name
+        .orderBy('startTime', descending: false)
+        .snapshots()
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList());
   }
 }
