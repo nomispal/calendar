@@ -26,7 +26,7 @@ class EventFilterButton extends StatelessWidget {
               Icon(Icons.filter_list, color: Colors.white),
               SizedBox(width: 8),
               Text(
-                "Filter Events",
+                "Filter Tasks",
                 style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],

@@ -9,7 +9,6 @@ class EventDialog extends StatefulWidget {
   final Function() onSave;
   final Event? event; // Optional event parameter for updating
 
-
   const EventDialog({
     Key? key,
     required this.date,
@@ -86,6 +85,24 @@ class _EventDialogState extends State<EventDialog> {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.grey[300], // Set background color to grey
+              hourMinuteColor: Colors.white, // Set hour/minute selection color
+              hourMinuteTextColor: Colors.black, // Set hour/minute text color
+              dayPeriodColor: Colors.white, // Set AM/PM selection color
+              dayPeriodTextColor: Colors.black, // Set AM/PM text color
+              dialHandColor: Colors.grey, // Set clock hand color
+              dialBackgroundColor: Colors.grey[200], // Set clock dial background
+              dialTextColor: Colors.black, // Set clock numbers color
+              entryModeIconColor: Colors.grey, // Set entry mode icon color
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedTime != null) {
       setState(() {
@@ -97,6 +114,7 @@ class _EventDialogState extends State<EventDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.grey[300],
       title: const Text('Add Event'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -109,6 +127,7 @@ class _EventDialogState extends State<EventDialog> {
                   return const Iterable<String>.empty();
                 }
                 return _eventSuggestions.where((String suggestion) {
+                  // Case-insensitive comparison
                   return suggestion
                       .toLowerCase()
                       .contains(textEditingValue.text.toLowerCase());
@@ -124,7 +143,15 @@ class _EventDialogState extends State<EventDialog> {
                 return TextField(
                   controller: textEditingController,
                   focusNode: focusNode,
-                  decoration: const InputDecoration(hintText: 'Event title'),
+                  decoration: InputDecoration(
+                    hintText: 'Event title',
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                  ),
                 );
               },
               optionsViewBuilder: (BuildContext context,
@@ -134,6 +161,7 @@ class _EventDialogState extends State<EventDialog> {
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
+                    color: Colors.grey[300], // Set dropdown background color
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.5,
                       constraints: const BoxConstraints(maxHeight: 200),
@@ -160,9 +188,14 @@ class _EventDialogState extends State<EventDialog> {
           // Description TextField
           TextField(
             controller: _descriptionController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Comments',
-              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey),
+              ),
             ),
             maxLines: 3, // Allow multiple lines for description
           ),
@@ -172,19 +205,26 @@ class _EventDialogState extends State<EventDialog> {
             child: Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(4.0),
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(12.0),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _selectedTime == null
-                        ? 'Select Time'
-                        : _selectedTime!.format(context),
-                  ),
-                  const Icon(Icons.access_time),
-                ],
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.0),
+                  color: Colors.grey,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _selectedTime == null
+                          ? 'Select Time'
+                          : _selectedTime!.format(context),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    const Icon(Icons.access_time, color: Colors.white), // Set icon color to grey
+                  ],
+                ),
               ),
             ),
           ),
@@ -192,15 +232,26 @@ class _EventDialogState extends State<EventDialog> {
           // Button to add new suggestions
           ElevatedButton(
             onPressed: _addNewSuggestionDialog,
-            child: const Text('Add New Suggestion'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey, // Set button color to grey
+            ),
+            child: const Text(
+              'Add New Suggestion',
+              style: TextStyle(color: Colors.white), // Set text color to white
+            ),
           ),
         ],
       ),
       actions: [
+        // Cancel Button
         TextButton(
           onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black, // Set text color to grey
+          ),
           child: const Text('Cancel'),
         ),
+        // Save Button
         TextButton(
           onPressed: () {
             if (_titleController.text.isNotEmpty && _selectedTime != null) {
@@ -227,6 +278,9 @@ class _EventDialogState extends State<EventDialog> {
               Navigator.pop(context);
             }
           },
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black, // Set text color to grey
+          ),
           child: const Text('Save'),
         ),
       ],

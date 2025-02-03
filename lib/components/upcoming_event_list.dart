@@ -15,7 +15,7 @@ class UpcomingEventsList extends StatelessWidget {
     const Padding(
     padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
     child: Text(
-    "Upcoming Events",
+    "Upcoming Tasks",
     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
     ),
     ),
@@ -41,7 +41,7 @@ class UpcomingEventsList extends StatelessWidget {
             itemBuilder: (context, index) {
               final event = events[index];
               return Container(
-                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white,

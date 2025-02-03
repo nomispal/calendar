@@ -26,7 +26,8 @@ class _HomeCalendarState extends State<HomeCalendar> {
   // Function to calculate the end of the week (Sunday)
   DateTime endOfWeek(DateTime date) {
     final weekday = date.weekday;
-    return date.add(Duration(days: 7 - weekday)); // Add days to get Sunday
+    final sunday = date.add(Duration(days: 7 - weekday));
+    return DateTime(sunday.year, sunday.month, sunday.day, 23, 59, 59, 999);
   }
 
   @override
@@ -58,6 +59,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                 builder: (context, focusedDay, _) {
                   final startOfWeekDate = startOfWeek(focusedDay);  // Calculate start of the week
                   final endOfWeekDate = endOfWeek(focusedDay);
+
 
                   return Column(
                     children: [
@@ -106,7 +108,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                               children: List.generate(7, (index) {
                                 final day = startOfWeekDate.add(Duration(days: index));
                                 final dayEvents = events.where((event) => _isSameDate(event.date, day)).toList();
-                                final address = _selectedAddresses[day] ?? 'No Address Selected';
+                                final address = _selectedAddresses[day] ?? 'No Property Selected';
 
                                 return Expanded(
                                   child: Container(
@@ -125,9 +127,12 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                           Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                address,
-                                                style: const TextStyle(fontSize: 12.0),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  address,
+                                                  style: const TextStyle(fontSize: 12.0),
+                                                ),
                                               ),
                                               GestureDetector(
                                                 onTap: () async {
@@ -154,14 +159,14 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                   }
                                                 },
                                                 child: Container(
-                                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                                                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                                                   decoration: BoxDecoration(
                                                     color: _selectedAddresses.containsKey(day) ? Colors.blueGrey : Colors.grey, // Change colors as needed
                                                     borderRadius: BorderRadius.circular(8),
                                                   ),
                                                   child: Text(
-                                                    _selectedAddresses.containsKey(day) ? 'Remove Location' : 'Add Location',
-                                                    style: const TextStyle(fontSize: 13, color: Colors.white),
+                                                    _selectedAddresses.containsKey(day) ? 'Remove Property' : 'Add Property',
+                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
                                                   ),
                                                 ),
                                               )
@@ -289,7 +294,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                   ),
                                                   SizedBox(width: 4),
                                                   Text(
-                                                    'Add Event',
+                                                    'Add Task',
                                                     style: TextStyle(
                                                       fontSize: 12,
                                                       color: Colors.grey,
@@ -321,7 +326,9 @@ class _HomeCalendarState extends State<HomeCalendar> {
   }
 
   bool _isSameDate(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+    final date1Only = DateTime(date1.year, date1.month, date1.day); // Strips the time part
+    final date2Only = DateTime(date2.year, date2.month, date2.day); // Strips the time part
+    return date1Only.isAtSameMomentAs(date2Only); // Compares the date only
   }
 
   Future<void> _deleteEvent(Event event) async {

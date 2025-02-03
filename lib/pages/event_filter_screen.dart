@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import 'package:intl/intl.dart';
 
 class EventFilterScreen extends StatefulWidget {
   @override
@@ -15,11 +16,11 @@ class _EventFilterScreenState extends State<EventFilterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Filter Events"),
-        backgroundColor: Colors.grey[300],
+        title: Text("Filter Tasks"),
+        backgroundColor: Colors.grey[200],
       ),
       body: Container(
-        color: Colors.grey[300],
+        color: Colors.grey[200],
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -63,18 +64,30 @@ class _EventFilterScreenState extends State<EventFilterScreen> {
                       itemBuilder: (context, index) {
                         final event = events[index];
                         return Card(
+                          color: Colors.white,
                           elevation: 4,
                           margin: EdgeInsets.symmetric(vertical: 8),
                           child: ListTile(
-                            title: Text(event.title, style: TextStyle(fontWeight: FontWeight.bold)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                            title: Text(
+                              event.title,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Date: ${event.date.toLocal()}"),
-                                Text("Address: ${event.address ?? 'No Address'}"),
+                                Text(
+                                  '${DateFormat('EEE, MMM d').format(event.date)} • ${DateFormat('h:mm a').format(event.startTime)}',
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                if (event.address != null && event.address!.isNotEmpty) // Check if address exists
+                                  Text(
+                                    event.address!,
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  ),
                               ],
                             ),
-                            leading: Icon(Icons.event, color: Colors.blueAccent),
+                            trailing: const Icon(Icons.event, size: 20, color: Colors.blue),
                           ),
                         );
                       },
