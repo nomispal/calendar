@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             width: screenWidth * 0.25, // 30% of the screen width
             padding: const EdgeInsets.all(8.0),
-            color: Colors.grey[300],
+            color: Colors.grey[200],
             child: MyCalendar(controller: calendarController),
           ),
           // Expandable right-side container

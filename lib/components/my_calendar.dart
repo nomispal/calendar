@@ -1,6 +1,8 @@
+import 'package:calendar/components/event_filter.dart';
 import 'package:calendar/components/upcoming_event_list.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../pages/event_filter_screen.dart';
 import '../state/calendar_controller.dart';
 import 'event_search.dart';
 
@@ -58,6 +60,7 @@ class _MyCalendarState extends State<MyCalendar> {
                   weekendTextStyle: TextStyle(
                       color: Colors.red, fontSize: 15, fontWeight: FontWeight.w500),
                   todayDecoration: BoxDecoration(
+
                     color: Colors.blueAccent,
                     shape: BoxShape.circle,
                   ),
@@ -100,8 +103,14 @@ class _MyCalendarState extends State<MyCalendar> {
         const Divider(), // Add a separator
         const UpcomingEventsList(), // Add upcoming events list
         const Divider(),
-         // Add search bar
-
+        EventFilterButton(
+            onTap:(){
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EventFilterScreen()),
+              );
+            }
+        )
       ],
     );
   }

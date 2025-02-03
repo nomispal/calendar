@@ -56,10 +56,23 @@ class UpcomingEventsList extends StatelessWidget {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                  title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  subtitle: Text(
-                    '${DateFormat('EEE, MMM d').format(event.date)} • ${DateFormat('h:mm a').format(event.startTime)}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  title: Text(
+                    event.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${DateFormat('EEE, MMM d').format(event.date)} • ${DateFormat('h:mm a').format(event.startTime)}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      if (event.address != null && event.address!.isNotEmpty) // Check if address exists
+                        Text(
+                          event.address!,
+                          style: const TextStyle(fontSize: 12, color: Colors.black87),
+                        ),
+                    ],
                   ),
                   trailing: const Icon(Icons.event, size: 20, color: Colors.blue),
                 ),
