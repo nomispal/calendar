@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage> {
             color: Colors.grey[200],
             child: MyCalendar(controller: calendarController),
           ),
+          SizedBox(width: 8),
           // Expandable right-side container
           Expanded(
             child: HomeCalendar(controller: calendarController,),

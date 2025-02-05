@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event.dart';
 import 'add_suggestions_dialog.dart';
+import 'address_search_field.dart';
 
 class EventDialog extends StatefulWidget {
   final DateTime date;
@@ -23,7 +24,9 @@ class EventDialog extends StatefulWidget {
 
 class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController(); // Controller for description
+  final TextEditingController _descriptionController = TextEditingController();// Controller for description
+  String _selectedAddress = '';
+
   TimeOfDay? _selectedTime;
 
   // Initialize the suggestions list
@@ -40,6 +43,7 @@ class _EventDialogState extends State<EventDialog> {
       _titleController.text = widget.event!.title;
       _descriptionController.text = widget.event!.description ?? '';
       _selectedTime = TimeOfDay.fromDateTime(widget.event!.startTime);
+      _selectedAddress = widget.selectedAddresses[widget.date] ?? '';
     }
   }
 
@@ -119,6 +123,52 @@ class _EventDialogState extends State<EventDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Location Widget inside the dialog
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  _selectedAddress.isEmpty ? 'No Property Selected' : _selectedAddress,
+                  style: const TextStyle(fontSize: 12.0),
+                ),
+              ),
+              GestureDetector(
+                onTap: () async {
+                  final selectedAddress = await showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AddressAutocomplete(
+                        onAddressSelected: (address) {
+                          Navigator.of(context).pop(address);
+                        },
+                      );
+                    },
+                  );
+                  if (selectedAddress != null) {
+                    setState(() {
+                      _selectedAddress = selectedAddress;
+                      // Update the selectedAddresses map in the parent
+                      widget.selectedAddresses[widget.date] = selectedAddress;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: _selectedAddress.isEmpty ? Colors.grey : Colors.blueGrey,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _selectedAddress.isEmpty ? 'Add Property' : 'Change Property',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16.0),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
             child: Autocomplete<String>(
@@ -263,8 +313,10 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.minute,
               );
 
-              final address = widget.selectedAddresses[widget.date] ??
-                  'No Address Selected';
+              // Use the address selected in the dialog
+              final address = _selectedAddress.isNotEmpty
+                  ? _selectedAddress
+                  : 'No Address Selected';
 
               Event.addEvent(Event(
                 title: _titleController.text,

@@ -28,7 +28,12 @@ class _EventFilterScreenState extends State<EventFilterScreen> {
               TextField(
                 decoration: InputDecoration(
                   labelText: "Event Type",
-                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                   prefixIcon: Icon(Icons.event),
                 ),
                 onChanged: (value) {
@@ -41,7 +46,12 @@ class _EventFilterScreenState extends State<EventFilterScreen> {
               TextField(
                 decoration: InputDecoration(
                   labelText: "Address",
-                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                   prefixIcon: Icon(Icons.location_on),
                 ),
                 onChanged: (value) {
@@ -103,16 +113,24 @@ class _EventFilterScreenState extends State<EventFilterScreen> {
   }
 
   Stream<List<Event>> _filterEvents(String type, String addr) {
-    Query query = FirebaseFirestore.instance.collection('events');
-
-    if (type.isNotEmpty) {
-      query = query.where('title', isGreaterThanOrEqualTo: type).where('title', isLessThan: type + 'z');
-    }
-    if (addr.isNotEmpty) {
-      query = query.where('address', isGreaterThanOrEqualTo: addr).where('address', isLessThan: addr + 'z');
-    }
-
-    return query.snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList());
+    return FirebaseFirestore.instance
+        .collection('events')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .where((doc) {
+        final event = Event.fromFirestore(doc);
+        // Case-insensitive filtering for event type
+        final matchesType = type.isEmpty ||
+            event.title.toLowerCase().contains(type.toLowerCase());
+        // Case-insensitive filtering for address
+        final matchesAddress = addr.isEmpty ||
+            (event.address != null &&
+                event.address!.toLowerCase().contains(addr.toLowerCase()));
+        return matchesType && matchesAddress;
+      })
+          .map((doc) => Event.fromFirestore(doc))
+          .toList();
+    });
   }
 }

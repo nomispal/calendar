@@ -123,56 +123,6 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // Location Widget
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text(
-                                                  address,
-                                                  style: const TextStyle(fontSize: 12.0),
-                                                ),
-                                              ),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  if (_selectedAddresses.containsKey(day)) {
-                                                    setState(() {
-                                                      _selectedAddresses.remove(day);
-                                                    });
-                                                  } else {
-                                                    final selectedAddress = await showDialog<String>(
-                                                      context: context,
-                                                      builder: (BuildContext context) {
-                                                        return AddressAutocomplete(
-                                                          onAddressSelected: (address) {
-                                                            Navigator.of(context).pop(address);
-                                                          },
-                                                        );
-                                                      },
-                                                    );
-                                                    if (selectedAddress != null) {
-                                                      setState(() {
-                                                        _selectedAddresses[day] = selectedAddress;
-                                                      });
-                                                    }
-                                                  }
-                                                },
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                                  decoration: BoxDecoration(
-                                                    color: _selectedAddresses.containsKey(day) ? Colors.blueGrey : Colors.grey, // Change colors as needed
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: Text(
-                                                    _selectedAddresses.containsKey(day) ? 'Remove Property' : 'Add Property',
-                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
-                                                  ),
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8.0),
                                           // Events Widget
                                           if (dayEvents.isEmpty)
                                             Text(
@@ -217,9 +167,8 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                                                 padding: const EdgeInsets.all(8.0),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.grey.withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(4.0),
-                                                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                                  color: Colors.grey[300],
+                                                  borderRadius: BorderRadius.circular(8.0),
                                                 ),
                                                 child: Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,7 +179,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                         children: [
                                                           // Time Range
                                                           Text(
-                                                            '${DateFormat('HH:mm').format(event.startTime)}',
+                                                            DateFormat('h:mm a').format(event.startTime), // 12-hour format with AM/PM
                                                             style: const TextStyle(
                                                               fontSize: 12,
                                                               fontWeight: FontWeight.bold,
@@ -245,6 +194,13 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                               fontSize: 14,
                                                               fontWeight: FontWeight.w600,
                                                               color: Colors.black87,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            event.address ?? 'No Location',
+                                                            style: const TextStyle(
+                                                              fontSize: 12,
+                                                              color: Colors.black,
                                                             ),
                                                           ),
                                                           // Event Description (if any)
@@ -278,32 +234,18 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                 ),
                                               );
                                             },
-                                            child: Container(
-                                              padding: const EdgeInsets.all(8.0),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(color: Colors.grey.withOpacity(0.5)),
-                                                borderRadius: BorderRadius.circular(4.0),
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: const [
-                                                  Icon(
-                                                    Icons.add,
-                                                    size: 16,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  SizedBox(width: 4),
-                                                  Text(
-                                                    'Add Task',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  "Add Tasks",
+                                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                                                ),
                                               ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),
