@@ -7,6 +7,7 @@ class Event {
   final DateTime startTime;
   final String? address;
   final String? description;
+  final String type; // Add this field
 
   Event({
     required this.id,
@@ -15,6 +16,7 @@ class Event {
     required this.startTime,
     this.address,
     this.description,
+    required this.type, // Add this to the constructor
   });
 
   Map<String, dynamic> toMap() {
@@ -24,6 +26,7 @@ class Event {
       'startTime': Timestamp.fromDate(startTime),
       'address': address,
       'description': description,
+      'type': type, // Include type in the map
     };
   }
 
@@ -31,17 +34,16 @@ class Event {
     final data = doc.data() as Map<String, dynamic>;
     return Event(
       id: doc.id,
-      // Critical: Get document ID from snapshot
       title: data['title'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       startTime: (data['startTime'] as Timestamp).toDate(),
       address: data['address'],
       description: data['description'],
+      type: data['type'] ?? 'other', // Default to 'other' if type is not specified
     );
   }
 
-  static Stream<List<Event>> getEventsForDateStream(DateTime start,
-      DateTime end) {
+  static Stream<List<Event>> getEventsForDateStream(DateTime start, DateTime end) {
     return FirebaseFirestore.instance
         .collection('events')
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
@@ -50,7 +52,6 @@ class Event {
         .map((snapshot) =>
         snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList());
   }
-
 
   static Future<void> addEvent(Event event) async {
     await FirebaseFirestore.instance.collection('events').add(event.toMap());
@@ -64,9 +65,7 @@ class Event {
   }
 
   static Future<void> removeEvent(Event event) async {
-    await FirebaseFirestore.instance.collection('events')
-        .doc(event.id)
-        .delete();
+    await FirebaseFirestore.instance.collection('events').doc(event.id).delete();
   }
 
   // Get all events stream

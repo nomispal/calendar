@@ -24,30 +24,26 @@ class EventDialog extends StatefulWidget {
 
 class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();// Controller for description
+  final TextEditingController _descriptionController = TextEditingController();
   String _selectedAddress = '';
-
   TimeOfDay? _selectedTime;
-
-  // Initialize the suggestions list
+  String _selectedType = 'other'; // Default to 'other'
   List<String> _eventSuggestions = [];
-
-  // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
     super.initState();
-    _loadSuggestions(); // Load suggestions when the dialog is opened
+    _loadSuggestions();
     if (widget.event != null) {
       _titleController.text = widget.event!.title;
       _descriptionController.text = widget.event!.description ?? '';
       _selectedTime = TimeOfDay.fromDateTime(widget.event!.startTime);
       _selectedAddress = widget.selectedAddresses[widget.date] ?? '';
+      _selectedType = widget.event!.type; // Set the event type
     }
   }
 
-  // Load suggestions from Firestore
   Future<void> _loadSuggestions() async {
     try {
       final querySnapshot = await _firestore.collection('suggestions').get();
@@ -60,19 +56,17 @@ class _EventDialogState extends State<EventDialog> {
     }
   }
 
-  // Add a new suggestion to Firestore
   Future<void> _addNewSuggestion(String suggestion) async {
     try {
       await _firestore.collection('suggestions').add({
         'title': suggestion,
       });
-      await _loadSuggestions(); // Reload suggestions after adding a new one
+      await _loadSuggestions();
     } catch (e) {
       print('Error adding suggestion: $e');
     }
   }
 
-  // Function to open a dialog for adding new suggestions
   void _addNewSuggestionDialog() async {
     final newSuggestion = await showDialog<String>(
       context: context,
@@ -80,8 +74,7 @@ class _EventDialogState extends State<EventDialog> {
     );
 
     if (newSuggestion != null && newSuggestion.isNotEmpty) {
-      await _addNewSuggestion(
-          newSuggestion); // Add the new suggestion to Firestore
+      await _addNewSuggestion(newSuggestion);
     }
   }
 
@@ -93,15 +86,15 @@ class _EventDialogState extends State<EventDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             timePickerTheme: TimePickerThemeData(
-              backgroundColor: Colors.grey[300], // Set background color to grey
-              hourMinuteColor: Colors.white, // Set hour/minute selection color
-              hourMinuteTextColor: Colors.black, // Set hour/minute text color
-              dayPeriodColor: Colors.white, // Set AM/PM selection color
-              dayPeriodTextColor: Colors.black, // Set AM/PM text color
-              dialHandColor: Colors.grey, // Set clock hand color
-              dialBackgroundColor: Colors.grey[200], // Set clock dial background
-              dialTextColor: Colors.black, // Set clock numbers color
-              entryModeIconColor: Colors.grey, // Set entry mode icon color
+              backgroundColor: Colors.grey[300],
+              hourMinuteColor: Colors.white,
+              hourMinuteTextColor: Colors.black,
+              dayPeriodColor: Colors.white,
+              dayPeriodTextColor: Colors.black,
+              dialHandColor: Colors.grey,
+              dialBackgroundColor: Colors.grey[200],
+              dialTextColor: Colors.black,
+              entryModeIconColor: Colors.grey,
             ),
           ),
           child: child!,
@@ -123,7 +116,7 @@ class _EventDialogState extends State<EventDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Location Widget inside the dialog
+          // Location Widget
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -149,7 +142,6 @@ class _EventDialogState extends State<EventDialog> {
                   if (selectedAddress != null) {
                     setState(() {
                       _selectedAddress = selectedAddress;
-                      // Update the selectedAddresses map in the parent
                       widget.selectedAddresses[widget.date] = selectedAddress;
                     });
                   }
@@ -169,6 +161,27 @@ class _EventDialogState extends State<EventDialog> {
             ],
           ),
           const SizedBox(height: 16.0),
+          // Event Type Dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedType,
+            decoration: const InputDecoration(
+              labelText: 'Event Type',
+              border: OutlineInputBorder(),
+            ),
+            items: ['meeting', 'personal', 'work', 'social', 'other']
+                .map((type) => DropdownMenuItem(
+              value: type,
+              child: Text(type),
+            ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedType = value!;
+              });
+            },
+          ),
+          const SizedBox(height: 16.0),
+          // Title Autocomplete
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
             child: Autocomplete<String>(
@@ -177,7 +190,6 @@ class _EventDialogState extends State<EventDialog> {
                   return const Iterable<String>.empty();
                 }
                 return _eventSuggestions.where((String suggestion) {
-                  // Case-insensitive comparison
                   return suggestion
                       .toLowerCase()
                       .contains(textEditingValue.text.toLowerCase());
@@ -195,10 +207,10 @@ class _EventDialogState extends State<EventDialog> {
                   focusNode: focusNode,
                   decoration: InputDecoration(
                     hintText: 'Event title',
-                    focusedBorder: OutlineInputBorder(
+                    focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black),
                     ),
-                    enabledBorder: OutlineInputBorder(
+                    enabledBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
                     ),
                   ),
@@ -211,7 +223,7 @@ class _EventDialogState extends State<EventDialog> {
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
-                    color: Colors.grey[300], // Set dropdown background color
+                    color: Colors.grey[300],
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.5,
                       constraints: const BoxConstraints(maxHeight: 200),
@@ -238,7 +250,7 @@ class _EventDialogState extends State<EventDialog> {
           // Description TextField
           TextField(
             controller: _descriptionController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'Comments',
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.black),
@@ -247,9 +259,10 @@ class _EventDialogState extends State<EventDialog> {
                 borderSide: BorderSide(color: Colors.grey),
               ),
             ),
-            maxLines: 3, // Allow multiple lines for description
+            maxLines: 3,
           ),
           const SizedBox(height: 16.0),
+          // Time Picker
           GestureDetector(
             onTap: _pickTime,
             child: Container(
@@ -258,36 +271,30 @@ class _EventDialogState extends State<EventDialog> {
                 color: Colors.grey,
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                  color: Colors.grey,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _selectedTime == null
-                          ? 'Select Time'
-                          : _selectedTime!.format(context),
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    const Icon(Icons.access_time, color: Colors.white), // Set icon color to grey
-                  ],
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedTime == null
+                        ? 'Select Time'
+                        : _selectedTime!.format(context),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const Icon(Icons.access_time, color: Colors.white),
+                ],
               ),
             ),
           ),
           const SizedBox(height: 16.0),
-          // Button to add new suggestions
+          // Add New Suggestion Button
           ElevatedButton(
             onPressed: _addNewSuggestionDialog,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey, // Set button color to grey
+              backgroundColor: Colors.grey,
             ),
             child: const Text(
               'Add New Suggestion',
-              style: TextStyle(color: Colors.white), // Set text color to white
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -297,7 +304,7 @@ class _EventDialogState extends State<EventDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           style: TextButton.styleFrom(
-            foregroundColor: Colors.black, // Set text color to grey
+            foregroundColor: Colors.black,
           ),
           child: const Text('Cancel'),
         ),
@@ -313,25 +320,32 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.minute,
               );
 
-              // Use the address selected in the dialog
               final address = _selectedAddress.isNotEmpty
                   ? _selectedAddress
                   : 'No Address Selected';
 
-              Event.addEvent(Event(
+              final event = Event(
                 title: _titleController.text,
                 date: selectedDateTime,
-                id: '', // You might want to generate a unique ID here
+                id: widget.event?.id ?? '', // Use existing ID if updating
                 address: address,
-                startTime: selectedDateTime, // Use selectedDateTime as startTime
-                description: _descriptionController.text, // Add the description
-              ));
+                startTime: selectedDateTime,
+                description: _descriptionController.text,
+                type: _selectedType, // Include the selected type
+              );
+
+              if (widget.event == null) {
+                Event.addEvent(event);
+              } else {
+                Event.updateEvent(event);
+              }
+
               widget.onSave();
               Navigator.pop(context);
             }
           },
           style: TextButton.styleFrom(
-            foregroundColor: Colors.black, // Set text color to grey
+            foregroundColor: Colors.black,
           ),
           child: const Text('Save'),
         ),

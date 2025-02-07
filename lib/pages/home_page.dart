@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
       body: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -38,8 +38,17 @@ class _HomePageState extends State<HomePage> {
           SizedBox(width: 8),
           // Expandable right-side container
           Expanded(
-            child: HomeCalendar(controller: calendarController,),
-          ),
+            child: Container(
+              padding: EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.grey[200], // Set the background color
+              ),
+              child: ClipRRect(  // This ensures the child content stays within the rounded corners
+                borderRadius: BorderRadius.circular(27.0),
+                child: HomeCalendar(controller: calendarController),
+              ),
+            ),
+          )
         ],
       ),
     );

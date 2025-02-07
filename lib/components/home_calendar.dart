@@ -5,6 +5,19 @@ import './event_dialog.dart';
 import '../models/event.dart';
 import '../components/address_search_field.dart';
 
+// Add color map and contrast function outside the class
+ Map<String, Color> _eventTypeColor = {
+   'meeting': Colors.blue[200]!,
+   'personal': Colors.green[200]!,
+   'work': Colors.orange[200]!,
+   'social': Colors.purple[200]!,
+   'other': Colors.teal[200]!,
+ };
+
+Color _getContrastColor(Color background) {
+  return background.computeLuminance() > 0.4 ? Colors.black87 : Colors.black;
+}
+
 class HomeCalendar extends StatefulWidget {
   final CalendarController controller;
 
@@ -17,13 +30,11 @@ class HomeCalendar extends StatefulWidget {
 class _HomeCalendarState extends State<HomeCalendar> {
   final Map<DateTime, String> _selectedAddresses = {};
 
-  // Function to calculate the start of the week (Monday)
   DateTime startOfWeek(DateTime date) {
     final weekday = date.weekday;
-    return date.subtract(Duration(days: weekday - 1)); // Subtract days to get Monday
+    return date.subtract(Duration(days: weekday - 1));
   }
 
-  // Function to calculate the end of the week (Sunday)
   DateTime endOfWeek(DateTime date) {
     final weekday = date.weekday;
     final sunday = date.add(Duration(days: 7 - weekday));
@@ -33,7 +44,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
   @override
   Widget build(BuildContext context) {
     final daysOfWeek = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+      'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
     ];
 
     return Scaffold(
@@ -57,9 +68,8 @@ class _HomeCalendarState extends State<HomeCalendar> {
               child: ValueListenableBuilder<DateTime>(
                 valueListenable: widget.controller.focusedDayNotifier,
                 builder: (context, focusedDay, _) {
-                  final startOfWeekDate = startOfWeek(focusedDay);  // Calculate start of the week
+                  final startOfWeekDate = startOfWeek(focusedDay);
                   final endOfWeekDate = endOfWeek(focusedDay);
-
 
                   return Column(
                     children: [
@@ -68,20 +78,23 @@ class _HomeCalendarState extends State<HomeCalendar> {
                           final day = startOfWeekDate.add(Duration(days: index));
                           return Expanded(
                             child: Container(
+                              margin: const EdgeInsets.all(8.0),
                               padding: const EdgeInsets.all(8.0),
                               alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                border: Border(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12.0),
+                                color: Colors.grey[300],
+                                border: const Border(
                                   bottom: BorderSide(color: Colors.grey),
                                 ),
                               ),
-                              child: Column(
+                              child: Row(
                                 children: [
                                   Text(
                                     daysOfWeek[index],
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(height: 4.0),
+                                  const SizedBox(width: 12.0),
                                   Text(
                                     '${day.day}',
                                     style: const TextStyle(fontSize: 14.0, color: Colors.grey),
@@ -94,7 +107,7 @@ class _HomeCalendarState extends State<HomeCalendar> {
                       ),
                       Expanded(
                         child: StreamBuilder<List<Event>>(
-                          stream: Event.getEventsForDateStream(startOfWeekDate, endOfWeekDate), // Pass today's date (or any date within the week)
+                          stream: Event.getEventsForDateStream(startOfWeekDate, endOfWeekDate),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return const Center(child: CircularProgressIndicator());
@@ -112,27 +125,30 @@ class _HomeCalendarState extends State<HomeCalendar> {
 
                                 return Expanded(
                                   child: Container(
-                                    margin: const EdgeInsets.all(4.0),
-                                    padding: const EdgeInsets.all(8.0),
+                                    margin: const EdgeInsets.all(1.0),
+                                    padding: const EdgeInsets.all(1.0),
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(8.0),
+                                      border: Border.all(color: Colors.white),
                                     ),
                                     child: Container(
+                                      margin: const EdgeInsets.all(4.0),
+                                      padding: const EdgeInsets.all(2.0),
                                       color: Colors.white,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // Events Widget
                                           if (dayEvents.isEmpty)
                                             Text(
                                               'No Events',
-                                              style: const TextStyle(fontSize: 12.0),
+                                              style: TextStyle(
+                                                fontSize: 12.0,
+                                                color: Colors.grey.shade600,
+
+                                              ),
                                             ),
                                           for (final event in dayEvents)
                                             GestureDetector(
                                               onTap: () {
-                                                // Show options to delete or update the event
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) => AlertDialog(
@@ -144,17 +160,17 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                           leading: const Icon(Icons.edit),
                                                           title: const Text('Update Event'),
                                                           onTap: () {
-                                                            Navigator.pop(context); // Close the dialog
-                                                            _updateEvent(event); // Open the update dialog
-
+                                                            Navigator.pop(context);
+                                                            _updateEvent(event);
                                                           },
                                                         ),
                                                         ListTile(
                                                           leading: const Icon(Icons.delete, color: Colors.red),
-                                                          title: const Text('Delete Event', style: TextStyle(color: Colors.red)),
+                                                          title: const Text('Delete Event',
+                                                              style: TextStyle(color: Colors.red)),
                                                           onTap: () async {
-                                                            await _deleteEvent(event); // Delete the event
-                                                            Navigator.pop(context); // Close the dialog
+                                                            await _deleteEvent(event);
+                                                            Navigator.pop(context);
                                                           },
                                                         ),
                                                       ],
@@ -163,12 +179,14 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                 );
                                               },
                                               child: Container(
-                                                width: double.infinity, // Make the event container take full width
+                                                width: double.infinity,
                                                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                                                 padding: const EdgeInsets.all(8.0),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.grey[300],
+                                                  color: _eventTypeColor[event.type?.toLowerCase()]
+                                                      ?? Colors.grey.shade300,
                                                   borderRadius: BorderRadius.circular(8.0),
+
                                                 ),
                                                 child: Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,39 +195,48 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                                       child: Column(
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
-                                                          // Time Range
                                                           Text(
-                                                            DateFormat('h:mm a').format(event.startTime), // 12-hour format with AM/PM
-                                                            style: const TextStyle(
+                                                            DateFormat('h:mm a').format(event.startTime),
+                                                            style: TextStyle(
                                                               fontSize: 12,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: Colors.black87,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: _getContrastColor(
+                                                                  _eventTypeColor[event.type?.toLowerCase()]
+                                                                      ?? Colors.grey.shade300
+                                                              ),
                                                             ),
                                                           ),
                                                           const SizedBox(height: 4.0),
-                                                          // Event Title
                                                           Text(
                                                             event.title,
-                                                            style: const TextStyle(
+                                                            style: TextStyle(
                                                               fontSize: 14,
                                                               fontWeight: FontWeight.w600,
-                                                              color: Colors.black87,
+                                                              color: _getContrastColor(
+                                                                  _eventTypeColor[event.type?.toLowerCase()]?.withOpacity(0.2)
+                                                                      ?? Colors.grey.shade300
+                                                              ),
                                                             ),
                                                           ),
                                                           Text(
                                                             event.address ?? 'No Location',
-                                                            style: const TextStyle(
+                                                            style: TextStyle(
                                                               fontSize: 12,
-                                                              color: Colors.black,
+                                                              color: _getContrastColor(
+                                                                  _eventTypeColor[event.type?.toLowerCase()]?.withOpacity(0.2)
+                                                                      ?? Colors.grey.shade300
+                                                              ).withOpacity(0.8),
                                                             ),
                                                           ),
-                                                          // Event Description (if any)
                                                           if (event.description != null && event.description!.isNotEmpty)
                                                             Text(
                                                               event.description!,
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                 fontSize: 12,
-                                                                color: Colors.grey,
+                                                                color: _getContrastColor(
+                                                                    _eventTypeColor[event.type?.toLowerCase()]?.withOpacity(0.2)
+                                                                        ?? Colors.grey.shade300
+                                                                ).withOpacity(0.6),
                                                               ),
                                                             ),
                                                         ],
@@ -220,32 +247,30 @@ class _HomeCalendarState extends State<HomeCalendar> {
                                               ),
                                             ),
                                           const SizedBox(height: 8.0),
-                                          // Add Event Button (Updated)
                                           GestureDetector(
                                             onTap: () {
                                               showDialog(
                                                 context: context,
                                                 builder: (context) => EventDialog(
                                                   date: day,
-                                                  onSave: () {
-                                                    setState(() {}); // Trigger refresh after adding event
-                                                  },
+                                                  onSave: () => setState(() {}),
                                                   selectedAddresses: _selectedAddresses,
                                                 ),
                                               );
                                             },
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  "Add Tasks",
-                                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
-                                                ),
+                                            child: Container(
+                                              margin: const EdgeInsets.all(2.0),
+                                              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                "Add Tasks",
+                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
                                               ),
                                             ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -268,18 +293,16 @@ class _HomeCalendarState extends State<HomeCalendar> {
   }
 
   bool _isSameDate(DateTime date1, DateTime date2) {
-    final date1Only = DateTime(date1.year, date1.month, date1.day); // Strips the time part
-    final date2Only = DateTime(date2.year, date2.month, date2.day); // Strips the time part
-    return date1Only.isAtSameMomentAs(date2Only); // Compares the date only
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   Future<void> _deleteEvent(Event event) async {
-
     Navigator.pop(context);
-
     try {
-      await Event.removeEvent(event);  // Call removeEvent from the Event class
-      setState(() {});  // Refresh the UI after deletion
+      await Event.removeEvent(event);
+      setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Error deleting event: $e'),
@@ -288,16 +311,13 @@ class _HomeCalendarState extends State<HomeCalendar> {
   }
 
   Future<void> _updateEvent(Event event) async {
-    // Show a dialog to update the event
     await showDialog(
       context: context,
       builder: (context) => EventDialog(
         date: event.date,
-        onSave: () {
-          setState(() {}); // Refresh the UI after updating the event
-        },
+        onSave: () => setState(() {}),
         selectedAddresses: _selectedAddresses,
-        event: event, // Pass the event to pre-fill the dialog
+        event: event,
       ),
     );
   }
