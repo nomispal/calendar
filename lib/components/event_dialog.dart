@@ -8,14 +8,14 @@ class EventDialog extends StatefulWidget {
   final DateTime date;
   final Map<DateTime, String> selectedAddresses;
   final Function() onSave;
-  final Event? event; // Optional event parameter for updating
+  final Event? event;
 
   const EventDialog({
     Key? key,
     required this.date,
     required this.onSave,
     required this.selectedAddresses,
-    this.event, // Add this line
+    this.event,
   }) : super(key: key);
 
   @override
@@ -24,24 +24,41 @@ class EventDialog extends StatefulWidget {
 
 class _EventDialogState extends State<EventDialog> {
   final TextEditingController _titleController = TextEditingController();
+  late TextEditingController _autocompleteController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   String _selectedAddress = '';
   TimeOfDay? _selectedTime;
-  String _selectedType = 'other'; // Default to 'other'
+  String _selectedType = 'other';
   List<String> _eventSuggestions = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _titleError;
+  String? _timeError;
 
   @override
   void initState() {
     super.initState();
+    _titleController.addListener(() {
+      if (_titleController.text.isNotEmpty && _titleError != null) {
+        setState(() => _titleError = null);
+      }
+    });
     _loadSuggestions();
     if (widget.event != null) {
       _titleController.text = widget.event!.title;
+      _autocompleteController.text = widget.event!.title;
       _descriptionController.text = widget.event!.description ?? '';
       _selectedTime = TimeOfDay.fromDateTime(widget.event!.startTime);
       _selectedAddress = widget.selectedAddresses[widget.date] ?? '';
-      _selectedType = widget.event!.type; // Set the event type
+      _selectedType = widget.event!.type;
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _autocompleteController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSuggestions() async {
@@ -104,214 +121,261 @@ class _EventDialogState extends State<EventDialog> {
     if (pickedTime != null) {
       setState(() {
         _selectedTime = pickedTime;
+        _timeError = null;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width * 0.4;
+
     return AlertDialog(
       backgroundColor: Colors.grey[300],
       title: const Text('Add Event'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Location Widget
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      content: SizedBox(
+        width: dialogWidth,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  _selectedAddress.isEmpty ? 'No Property Selected' : _selectedAddress,
-                  style: const TextStyle(fontSize: 12.0),
-                ),
-              ),
-              GestureDetector(
-                onTap: () async {
-                  final selectedAddress = await showDialog<String>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AddressAutocomplete(
-                        onAddressSelected: (address) {
-                          Navigator.of(context).pop(address);
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: dialogWidth,
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      _selectedAddress.isEmpty
+                          ? 'No Property Selected'
+                          : _selectedAddress,
+                      style: const TextStyle(fontSize: 12.0),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      final selectedAddress = await showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AddressAutocomplete(
+                            onAddressSelected: (address) {
+                              Navigator.of(context).pop(address);
+                            },
+                          );
                         },
                       );
+                      if (selectedAddress != null) {
+                        setState(() {
+                          _selectedAddress = selectedAddress;
+                          widget.selectedAddresses[widget.date] = selectedAddress;
+                        });
+                      }
                     },
-                  );
-                  if (selectedAddress != null) {
-                    setState(() {
-                      _selectedAddress = selectedAddress;
-                      widget.selectedAddresses[widget.date] = selectedAddress;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  decoration: BoxDecoration(
-                    color: _selectedAddress.isEmpty ? Colors.grey : Colors.blueGrey,
-                    borderRadius: BorderRadius.circular(8),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                        decoration: BoxDecoration(
+                          color: _selectedAddress.isEmpty ? Colors.grey : Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _selectedAddress.isEmpty ? 'Add Property' : 'Change Property',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    _selectedAddress.isEmpty ? 'Add Property' : 'Change Property',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+              SizedBox(
+                width: dialogWidth,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedType,
+                  dropdownColor: Colors.grey[300],
+                  decoration: const InputDecoration(
+                    labelStyle: TextStyle(color: Colors.black),
+                    labelText: 'Event Type',
+                    border: OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey)),
+                  ),
+                  items: ['meeting', 'personal', 'work', 'social', 'other']
+                      .map((type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedType = value!);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              SizedBox(
+                width: dialogWidth,
+                child: Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+                    return _eventSuggestions.where((suggestion) =>
+                        suggestion.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                  },
+                  onSelected: (selection) {
+                    _titleController.text = selection;
+                    _autocompleteController.text = selection;
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                    _autocompleteController = controller;
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      onChanged: (value) {
+                        _titleController.text = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Event title',
+                        errorText: _titleError,
+                        errorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        focusedErrorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black)),
+                        enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey)),
+                      ),
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        color: Colors.grey[300],
+                        child: Container(
+                          width: dialogWidth,
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final option = options.elementAt(index);
+                              return ListTile(
+                                title: Text(option),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              SizedBox(
+                width: dialogWidth,
+                child: TextField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    hintText: 'Comments',
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey)),
+                  ),
+                  maxLines: 3,
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              SizedBox(
+                width: dialogWidth,
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickTime,
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(12.0)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_selectedTime?.format(context) ?? 'Select Time',
+                                style: const TextStyle(color: Colors.white)),
+                            const Icon(Icons.access_time, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_timeError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          _timeError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              GestureDetector(
+                onTap: _addNewSuggestionDialog,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Add New Suggestion',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16.0),
-          // Event Type Dropdown
-          DropdownButtonFormField<String>(
-            value: _selectedType,
-            decoration: const InputDecoration(
-              labelText: 'Event Type',
-              border: OutlineInputBorder(),
-            ),
-            items: ['meeting', 'personal', 'work', 'social', 'other']
-                .map((type) => DropdownMenuItem(
-              value: type,
-              child: Text(type),
-            ))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedType = value!;
-              });
-            },
-          ),
-          const SizedBox(height: 16.0),
-          // Title Autocomplete
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: Autocomplete<String>(
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) {
-                  return const Iterable<String>.empty();
-                }
-                return _eventSuggestions.where((String suggestion) {
-                  return suggestion
-                      .toLowerCase()
-                      .contains(textEditingValue.text.toLowerCase());
-                });
-              },
-              onSelected: (String selection) {
-                _titleController.text = selection;
-              },
-              fieldViewBuilder: (BuildContext context,
-                  TextEditingController textEditingController,
-                  FocusNode focusNode,
-                  VoidCallback onFieldSubmitted) {
-                return TextField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Event title',
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                    ),
-                  ),
-                );
-              },
-              optionsViewBuilder: (BuildContext context,
-                  AutocompleteOnSelected<String> onSelected,
-                  Iterable<String> options) {
-                return Align(
-                  alignment: Alignment.topLeft,
-                  child: Material(
-                    elevation: 4.0,
-                    color: Colors.grey[300],
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.5,
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: options.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final String option = options.elementAt(index);
-                          return ListTile(
-                            title: Text(option),
-                            onTap: () {
-                              onSelected(option);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          // Description TextField
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
-              hintText: 'Comments',
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey),
-              ),
-            ),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 16.0),
-          // Time Picker
-          GestureDetector(
-            onTap: _pickTime,
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _selectedTime == null
-                        ? 'Select Time'
-                        : _selectedTime!.format(context),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const Icon(Icons.access_time, color: Colors.white),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          // Add New Suggestion Button
-          ElevatedButton(
-            onPressed: _addNewSuggestionDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-            ),
-            child: const Text(
-              'Add New Suggestion',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+        ),
       ),
       actions: [
-        // Cancel Button
         TextButton(
           onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.black,
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.black),
           child: const Text('Cancel'),
         ),
-        // Save Button
         TextButton(
           onPressed: () {
-            if (_titleController.text.isNotEmpty && _selectedTime != null) {
+            final currentTitle = _autocompleteController.text;
+
+            setState(() {
+              _titleError = currentTitle.isEmpty
+                  ? 'Event title is required'
+                  : null;
+              _timeError = _selectedTime == null
+                  ? 'Please select a time'
+                  : null;
+            });
+
+            if (currentTitle.isNotEmpty && _selectedTime != null) {
               final selectedDateTime = DateTime(
                 widget.date.year,
                 widget.date.month,
@@ -320,18 +384,16 @@ class _EventDialogState extends State<EventDialog> {
                 _selectedTime!.minute,
               );
 
-              final address = _selectedAddress.isNotEmpty
-                  ? _selectedAddress
-                  : 'No Address Selected';
-
               final event = Event(
-                title: _titleController.text,
+                title: currentTitle,
                 date: selectedDateTime,
-                id: widget.event?.id ?? '', // Use existing ID if updating
-                address: address,
+                id: widget.event?.id ?? '',
+                address: _selectedAddress.isNotEmpty
+                    ? _selectedAddress
+                    : 'No Address Selected',
                 startTime: selectedDateTime,
                 description: _descriptionController.text,
-                type: _selectedType, // Include the selected type
+                type: _selectedType,
               );
 
               if (widget.event == null) {
@@ -344,9 +406,7 @@ class _EventDialogState extends State<EventDialog> {
               Navigator.pop(context);
             }
           },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.black,
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.black),
           child: const Text('Save'),
         ),
       ],
