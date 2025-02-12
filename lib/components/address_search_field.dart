@@ -4,7 +4,7 @@ import '../services/address_service.dart';
 class AddressAutocomplete extends StatefulWidget {
   final void Function(String) onAddressSelected;
 
-  AddressAutocomplete({Key? key, required this.onAddressSelected}) : super(key: key);
+  const AddressAutocomplete({super.key, required this.onAddressSelected});
 
   @override
   _AddressAutocompleteState createState() => _AddressAutocompleteState();
@@ -73,6 +73,7 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8.0),
+
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -81,7 +82,10 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
                 controller: _controller,
                 decoration: const InputDecoration(
                   labelText: 'Enter Address',
-                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey)),
                 ),
                 onChanged: _onTextChanged,
               ),

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/event.dart';
 
 class UpcomingEventsList extends StatelessWidget {
-  const UpcomingEventsList({Key? key}) : super(key: key);
+  const UpcomingEventsList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class UpcomingEventsList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 4,

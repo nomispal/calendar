@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../state/calendar_controller.dart';
 import './event_dialog.dart';
 import '../models/event.dart';
-import '../components/address_search_field.dart';
 
 // Add color map and contrast function outside the class
 Map<String, Color> _eventTypeColor = {
@@ -14,14 +13,11 @@ Map<String, Color> _eventTypeColor = {
   'other': Colors.teal[200]!,
 };
 
-Color _getContrastColor(Color background) {
-  return background.computeLuminance() > 0.4 ? Colors.black87 : Colors.black;
-}
 
 class HomeCalendar extends StatefulWidget {
   final CalendarController controller;
 
-  const HomeCalendar({required this.controller, Key? key}) : super(key: key);
+  const HomeCalendar({required this.controller, super.key});
 
   @override
   State<HomeCalendar> createState() => _HomeCalendarState();
@@ -148,7 +144,6 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
                               children: List.generate(7, (index) {
                                 final day = startOfWeekDate.add(Duration(days: index));
                                 final dayEvents = events.where((event) => _isSameDate(event.date, day)).toList();
-                                final address = _selectedAddresses[day] ?? 'No Property Selected';
 
                                 return Expanded(
                                   child: GestureDetector(
@@ -208,7 +203,7 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
                                                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                                                               padding: const EdgeInsets.all(8.0),
                                                               decoration: BoxDecoration(
-                                                                color: _eventTypeColor[event.type?.toLowerCase()] ?? Colors.grey.shade300,
+                                                                color: _eventTypeColor[event.type.toLowerCase()] ?? Colors.grey.shade300,
                                                                 borderRadius: BorderRadius.circular(8.0),
                                                                 boxShadow: [
                                                                   BoxShadow(
@@ -254,7 +249,7 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
 
   Widget _buildEventContent(Event event) {
     return GestureDetector(
-      onTap: () => _showEventOptions(event),
+      onTap: () => showEventOptions(event),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -346,32 +341,198 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
     );
   }
 
-  void _showEventOptions(Event event) {
+  void showEventOptions(Event event) {
     showDialog(
       context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
       builder: (context) => AlertDialog(
-        title: const Text('Event Options'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 10,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.event_note,
+                color: Colors.blue.shade700,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Task Options',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Update Event'),
-              onTap: () {
-                Navigator.pop(context);
-                _updateEvent(event);
-              },
+            const SizedBox(height: 8),
+            // Edit Option
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 200),
+                tween: Tween(begin: 1.0, end: 1.0),
+                builder: (context, value, child) => Transform.scale(
+                  scale: value,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.shade100.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _updateEvent(event);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.edit,
+                                  color: Colors.blue.shade700,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Edit Task',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Event', style: TextStyle(color: Colors.red)),
-              onTap: () async {
-                await _deleteEvent(event);
-                Navigator.pop(context);
-              },
+            const SizedBox(height: 12),
+            // Delete Option
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 200),
+                tween: Tween(begin: 1.0, end: 1.0),
+                builder: (context, value, child) => Transform.scale(
+                  scale: value,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.shade100.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await _deleteEvent(event);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red.shade700,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Delete Task',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -395,6 +556,7 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
 
   Future<void> _deleteEvent(Event event) async {
     try {
+
       await Event.removeEvent(event);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

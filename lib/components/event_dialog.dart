@@ -11,12 +11,12 @@ class EventDialog extends StatefulWidget {
   final Event? event;
 
   const EventDialog({
-    Key? key,
+    super.key,
     required this.date,
     required this.onSave,
     required this.selectedAddresses,
     this.event,
-  }) : super(key: key);
+  });
 
   @override
   _EventDialogState createState() => _EventDialogState();
@@ -87,7 +87,7 @@ class _EventDialogState extends State<EventDialog> {
   void _addNewSuggestionDialog() async {
     final newSuggestion = await showDialog<String>(
       context: context,
-      builder: (context) => AddSuggestionDialog(),
+      builder: (context) => const AddSuggestionDialog(),
     );
 
     if (newSuggestion != null && newSuggestion.isNotEmpty) {
@@ -304,18 +304,21 @@ class _EventDialogState extends State<EventDialog> {
                   children: [
                     GestureDetector(
                       onTap: _pickTime,
-                      child: Container(
-                        padding: const EdgeInsets.all(8.0),
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(12.0)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_selectedTime?.format(context) ?? 'Select Time',
-                                style: const TextStyle(color: Colors.white)),
-                            const Icon(Icons.access_time, color: Colors.white),
-                          ],
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                              color: Colors.grey,
+                              borderRadius: BorderRadius.circular(12.0)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(_selectedTime?.format(context) ?? 'Select Time',
+                                  style: const TextStyle(color: Colors.white)),
+                              const Icon(Icons.access_time, color: Colors.white),
+                            ],
+                          ),
                         ),
                       ),
                     ),

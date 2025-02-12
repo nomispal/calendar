@@ -1,8 +1,6 @@
 import 'package:calendar/components/home_calendar.dart';
 import 'package:calendar/components/my_calendar.dart';
-import 'package:calendar/components/upcoming_event_list.dart';
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 import '../state/calendar_controller.dart';
 
@@ -21,7 +19,6 @@ class _HomePageState extends State<HomePage> {
     // Get the screen width and height
     final calendarController = CalendarController();
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -35,11 +32,11 @@ class _HomePageState extends State<HomePage> {
             color: Colors.grey[200],
             child: MyCalendar(controller: calendarController),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           // Expandable right-side container
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
                 color: Colors.grey[200], // Set the background color
               ),
