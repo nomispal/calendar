@@ -1,3 +1,4 @@
+import 'package:calendar/components/custom_title_bar.dart';
 import 'package:calendar/components/home_calendar.dart';
 import 'package:calendar/components/my_calendar.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class _HomePageState extends State<HomePage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      appBar: CustomTitleBar(),
       backgroundColor: Colors.grey[200],
       body: Row(
         mainAxisAlignment: MainAxisAlignment.end,

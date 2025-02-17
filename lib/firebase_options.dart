@@ -63,13 +63,16 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.calendar',
   );
 
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyBO2VvTSfWWsudCDg0G71dvB5WCJnQr-Lo',
-    appId: '1:954133100225:web:3b20426687847ed75b8640',
-    messagingSenderId: '954133100225',
-    projectId: 'calendar-2c4e5',
-    authDomain: 'calendar-2c4e5.firebaseapp.com',
-    storageBucket: 'calendar-2c4e5.firebasestorage.app',
-    measurementId: 'G-LBFMC0DMBH',
+      authDomain: "calendar-2c4e5.firebaseapp.com",
+      projectId: "calendar-2c4e5",
+      storageBucket: "calendar-2c4e5.firebasestorage.app",
+      messagingSenderId: "954133100225",
+      appId: "1:954133100225:web:3b20426687847ed75b8640",
+      measurementId: "G-LBFMC0DMBH"
   );
+
 }

@@ -127,6 +127,7 @@ class _MyCalendarState extends State<MyCalendar> {
         const Divider(),
         const UpcomingEventsList(),
         const Divider(),
+        const SizedBox(height: 16),
         EventFilterButton(
             onTap: () {
               Navigator.push(

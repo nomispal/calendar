@@ -265,6 +265,15 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
                     color: Colors.black87,
                   ),
                 ),
+                if (event.isRecurring)
+                  Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.repeat,
+                        size: 16,
+                        color: Colors.blue[700],
+                      ),
+                  ),
                 const SizedBox(height: 4.0),
                 Text(
                   event.title,
@@ -291,6 +300,27 @@ class _HomeCalendarState extends State<HomeCalendar> with SingleTickerProviderSt
                       color: Colors.black54,
                     ),
                   ),
+                if (event.reminderPeriodMonths > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.notifications,
+                          size: 10,
+                          color: Colors.grey[700],
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${event.reminderPeriodMonths} month reminder',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
               ],
             ),
           ),
