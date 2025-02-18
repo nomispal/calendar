@@ -18,7 +18,7 @@ class TrayService {
   Future<void> _initSystemTray() async {
     await _systemTray.initSystemTray(
       iconPath: 'assets/app_icon.ico',
-      toolTip: 'Calendar Reminders',
+      toolTip: ' Reminders',
     );
 
     await _menu.buildFrom([
