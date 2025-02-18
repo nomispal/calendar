@@ -9,6 +9,7 @@ import 'package:win32_registry/win32_registry.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+bool isWindowClosed = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,26 +20,25 @@ void main() async {
 
   await windowManager.ensureInitialized();
 
-  // Configure window with custom title bar
   const mainWindowOptions = WindowOptions(
     size: Size(1200, 650),
     center: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: Color(0x00000000),
     skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden, // Changed to hidden for custom title bar
+    titleBarStyle: TitleBarStyle.hidden,
   );
 
-  // Set up auto-start
   await configureAutoStart();
-
-  // Initialize system tray first
   await initSystemTray();
 
-  // Then initialize window
+  // Initialize window with all options at once
   await windowManager.waitUntilReadyToShow(mainWindowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
   });
+
+  // Set prevent close after window is initialized
+  await windowManager.setPreventClose(true);
 
   windowManager.addListener(MyWindowListener());
 
@@ -71,8 +71,18 @@ class MyApp extends StatelessWidget {
 class MyWindowListener extends WindowListener {
   @override
   Future<void> onWindowClose() async {
-    // Hide window but keep app running in tray
+    isWindowClosed = true;
     await windowManager.hide();
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    // Handle window focus event to restore window
+    if (eventName == 'focus') {
+      if (isWindowClosed) {
+        showMainWindow();
+      }
+    }
   }
 }
 
@@ -87,9 +97,9 @@ Future<void> configureAutoStart() async {
     final exePath = Platform.resolvedExecutable;
     key.createValue(
       RegistryValue(
-        'DayTrack', // the key name
+        'DayTrack',
         RegistryValueType.string,
-        exePath,       // value: path to the executable
+        exePath,
       ),
     );
   } finally {
@@ -109,11 +119,15 @@ Future<void> initSystemTray() async {
   await menu.buildFrom([
     MenuItemLabel(
       label: 'Show Reminders',
-      onClicked: (_) => showRemindersRoute(),
+      onClicked: (_) async {
+        await showRemindersRoute();
+      },
     ),
     MenuItemLabel(
       label: 'Open App',
-      onClicked: (_) => windowManager.show(),
+      onClicked: (_) async {
+        await showMainWindow();
+      },
     ),
     MenuSeparator(),
     MenuItemLabel(
@@ -126,19 +140,30 @@ Future<void> initSystemTray() async {
 
   systemTray.registerSystemTrayEventHandler((eventName) {
     if (eventName == kSystemTrayEventClick) {
-      showRemindersRoute();
+      systemTray.popUpContextMenu();
+    } else if (eventName == kSystemTrayEventRightClick) {
+      systemTray.popUpContextMenu();
     }
   });
 }
 
+Future<void> showMainWindow() async {
+  isWindowClosed = false;
+  final isVisible = await windowManager.isVisible();
+  if (!isVisible) {
+    await windowManager.show();
+    await windowManager.focus();
+  }
+  navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+}
+
 Future<void> showRemindersRoute() async {
-  // Show window if hidden
+  isWindowClosed = false;
   if (!await windowManager.isVisible()) {
     await windowManager.show();
     await windowManager.focus();
   }
 
-  // Navigate to reminders
   if (navigatorKey.currentState?.canPop() ?? false) {
     navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
