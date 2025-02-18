@@ -38,7 +38,7 @@ class CustomTitleBar extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   // Minimize button
                   _WindowButton(
-                    icon: Icons.minimize,
+                    icon: Icons.minimize_rounded,
                     tooltip: 'Minimize',
                     onPressed: () async {
                       await windowManager.minimize();

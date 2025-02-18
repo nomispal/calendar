@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -76,10 +77,7 @@ class Event {
     );
   }
 
-  /// Computes the reminder date by subtracting the reminder offsets.
   DateTime get reminderDate {
-    // Adjust the date by the number of months specified.
-    // The DateTime constructor handles out-of-range months (e.g., month 0 becomes December of previous year).
     DateTime adjustedDate = DateTime(
       date.year,
       date.month + reminderPeriodMonths,
@@ -90,11 +88,11 @@ class Event {
       date.millisecond,
       date.microsecond,
     );
-    // Then subtract the days and minutes.
-    return adjustedDate.subtract(Duration(days: reminderDays, minutes: reminderMinutes));
+    return adjustedDate.subtract(Duration(
+      days: reminderDays,
+      minutes: reminderMinutes,
+    ));
   }
-
-
 
   static Future<void> addEvent(Event event) async {
     await FirebaseFirestore.instance.collection('events').add(event.toFirestore());
@@ -151,28 +149,66 @@ class Event {
         snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList());
   }
 
+  static DateTime _addMonths(DateTime date, int months) {
+    int newYear = date.year;
+    int newMonth = date.month + months;
+
+    // Handle year wrap-around
+    newYear += (newMonth - 1) ~/ 12;
+    newMonth = (newMonth - 1) % 12 + 1;
+
+    // Get last day of new month
+    final lastDayOfNewMonth = DateTime(newYear, newMonth + 1, 0);
+    final int maxDay = lastDayOfNewMonth.day;
+    final int newDay = date.day > maxDay ? maxDay : date.day;
+
+    return DateTime(
+      newYear,
+      newMonth,
+      newDay,
+      date.hour,
+      date.minute,
+      date.second,
+      date.millisecond,
+      date.microsecond,
+    );
+  }
+
   static Stream<List<Event>> getEventsForDateStream(DateTime start, DateTime end) {
     return FirebaseFirestore.instance
         .collection('events')
         .snapshots()
         .map((snapshot) {
-      List<Event> events = [];
-      for (var doc in snapshot.docs) {
-        Event event = Event.fromFirestore(doc);
+      final events = <Event>[];
+      for (final doc in snapshot.docs) {
+        final event = Event.fromFirestore(doc);
+
+        // Add original event if in range
         if (event.date.isAfter(start.subtract(const Duration(days: 1))) &&
             event.date.isBefore(end.add(const Duration(days: 1)))) {
           events.add(event);
         }
-        if (event.isRecurring && event.recurrenceInterval != null) {
+
+        // Handle recurring events
+        if (event.isRecurring) {
           DateTime nextDate = event.date;
-          while (nextDate.isBefore(end)) {
-            nextDate = DateTime(
-              nextDate.year,
-              nextDate.month + event.recurrenceInterval!,
-              nextDate.day + event.recurrenceDays,
-              nextDate.hour,
-              nextDate.minute + event.recurrenceMinutes,
-            );
+          int safetyCounter = 0;
+
+          while (nextDate.isBefore(end) && safetyCounter < 1000) {
+            // Handle different recurrence types
+            if (event.recurrenceInterval == 0) { // Custom
+              nextDate = nextDate.add(Duration(
+                days: event.recurrenceDays,
+                minutes: event.recurrenceMinutes,
+              ));
+            } else { // Preset intervals
+              nextDate = nextDate.add(Duration(
+                days: event.recurrenceInterval!,
+                minutes: event.recurrenceMinutes,
+              ));
+            }
+
+            // Check if within date range
             if (nextDate.isAfter(start) && nextDate.isBefore(end)) {
               events.add(event.copyWith(
                 id: '${event.id}_${nextDate.millisecondsSinceEpoch}',
@@ -180,10 +216,11 @@ class Event {
                 startTime: nextDate,
               ));
             }
+
+            safetyCounter++;
           }
         }
       }
       return events;
     });
-  }
-}
+  }}
